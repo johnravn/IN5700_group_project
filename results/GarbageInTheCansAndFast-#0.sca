@@ -1,0 +1,219 @@
+version 3
+run GarbageInTheCansAndFast-0-20250930-20:26:22-52392
+attr configname GarbageInTheCansAndFast
+attr datetime 20250930-20:26:22
+attr datetimef 20250930-202622
+attr experiment GarbageInTheCansAndFast
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsd ""
+attr iterationvarsf ""
+attr measurement ""
+attr network GarbageNetwork
+attr processid 52392
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+config description "Fog-based: each can sends 7/9 to cloud; fast can<->cloud links; both cans have garbage"
+config **.mode "\"fog\""
+config *.cansHaveGarbage true
+config network GarbageNetwork
+config sim-time-limit 30s
+config record-eventlog true
+config *.smartphone.moveStep 0.05s
+config *.smartphone.speed 90
+config *.smartphone.proximityRange 120
+config *.smartphone.startAboveCloudDy 90
+config **.dropCount 3
+config **.checkInterval 0.5s
+config GarbageNetwork.can1X 100
+config GarbageNetwork.can1Y 50
+config GarbageNetwork.can2X 100
+config GarbageNetwork.can2Y 350
+config GarbageNetwork.cloudX 800
+config GarbageNetwork.cloudY 200
+config **.dropCount 3
+config **.checkInterval 0.5s
+config *.slowDelay 100ms
+config *.slowDatarate 5Mbps
+config *.fastDelay 5ms
+config *.fastDatarate 100Mbps
+config *.clientDelay 10ms
+config *.clientDatarate 100Mbps
+
+par GarbageNetwork.smartphone.outToCan1.channel typename "\"ClientLink\""
+par GarbageNetwork.smartphone.outToCan1.channel disabled false
+attr mutable ""
+par GarbageNetwork.smartphone.outToCan1.channel delay 0.01s
+attr mutable ""
+attr unit s
+par GarbageNetwork.smartphone.outToCan1.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par GarbageNetwork.smartphone.outToCan1.channel ber 0
+attr mutable ""
+par GarbageNetwork.smartphone.outToCan1.channel per 0
+attr mutable ""
+par GarbageNetwork.can1.outToPhone.channel typename "\"ClientLink\""
+par GarbageNetwork.can1.outToPhone.channel disabled false
+attr mutable ""
+par GarbageNetwork.can1.outToPhone.channel delay 0.01s
+attr mutable ""
+attr unit s
+par GarbageNetwork.can1.outToPhone.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par GarbageNetwork.can1.outToPhone.channel ber 0
+attr mutable ""
+par GarbageNetwork.can1.outToPhone.channel per 0
+attr mutable ""
+par GarbageNetwork.smartphone.outToCan2.channel typename "\"ClientLink\""
+par GarbageNetwork.smartphone.outToCan2.channel disabled false
+attr mutable ""
+par GarbageNetwork.smartphone.outToCan2.channel delay 0.01s
+attr mutable ""
+attr unit s
+par GarbageNetwork.smartphone.outToCan2.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par GarbageNetwork.smartphone.outToCan2.channel ber 0
+attr mutable ""
+par GarbageNetwork.smartphone.outToCan2.channel per 0
+attr mutable ""
+par GarbageNetwork.can2.outToPhone.channel typename "\"ClientLink\""
+par GarbageNetwork.can2.outToPhone.channel disabled false
+attr mutable ""
+par GarbageNetwork.can2.outToPhone.channel delay 0.01s
+attr mutable ""
+attr unit s
+par GarbageNetwork.can2.outToPhone.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par GarbageNetwork.can2.outToPhone.channel ber 0
+attr mutable ""
+par GarbageNetwork.can2.outToPhone.channel per 0
+attr mutable ""
+par GarbageNetwork.smartphone.outToCloud.channel typename "\"SlowCloudLink\""
+par GarbageNetwork.smartphone.outToCloud.channel disabled false
+attr mutable ""
+par GarbageNetwork.smartphone.outToCloud.channel delay 0.1s
+attr mutable ""
+attr unit s
+par GarbageNetwork.smartphone.outToCloud.channel datarate 5e+06bps
+attr mutable ""
+attr unit bps
+par GarbageNetwork.smartphone.outToCloud.channel ber 0
+attr mutable ""
+par GarbageNetwork.smartphone.outToCloud.channel per 0
+attr mutable ""
+par GarbageNetwork.cloud.outToPhone.channel typename "\"SlowCloudLink\""
+par GarbageNetwork.cloud.outToPhone.channel disabled false
+attr mutable ""
+par GarbageNetwork.cloud.outToPhone.channel delay 0.1s
+attr mutable ""
+attr unit s
+par GarbageNetwork.cloud.outToPhone.channel datarate 5e+06bps
+attr mutable ""
+attr unit bps
+par GarbageNetwork.cloud.outToPhone.channel ber 0
+attr mutable ""
+par GarbageNetwork.cloud.outToPhone.channel per 0
+attr mutable ""
+par GarbageNetwork.can1.outToCloud.channel typename "\"FastFogLink\""
+par GarbageNetwork.can1.outToCloud.channel disabled false
+attr mutable ""
+par GarbageNetwork.can1.outToCloud.channel delay 0.005s
+attr mutable ""
+attr unit s
+par GarbageNetwork.can1.outToCloud.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par GarbageNetwork.can1.outToCloud.channel ber 0
+attr mutable ""
+par GarbageNetwork.can1.outToCloud.channel per 0
+attr mutable ""
+par GarbageNetwork.cloud.outToCan1.channel typename "\"FastFogLink\""
+par GarbageNetwork.cloud.outToCan1.channel disabled false
+attr mutable ""
+par GarbageNetwork.cloud.outToCan1.channel delay 0.005s
+attr mutable ""
+attr unit s
+par GarbageNetwork.cloud.outToCan1.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par GarbageNetwork.cloud.outToCan1.channel ber 0
+attr mutable ""
+par GarbageNetwork.cloud.outToCan1.channel per 0
+attr mutable ""
+par GarbageNetwork.can2.outToCloud.channel typename "\"FastFogLink\""
+par GarbageNetwork.can2.outToCloud.channel disabled false
+attr mutable ""
+par GarbageNetwork.can2.outToCloud.channel delay 0.005s
+attr mutable ""
+attr unit s
+par GarbageNetwork.can2.outToCloud.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par GarbageNetwork.can2.outToCloud.channel ber 0
+attr mutable ""
+par GarbageNetwork.can2.outToCloud.channel per 0
+attr mutable ""
+par GarbageNetwork.cloud.outToCan2.channel typename "\"FastFogLink\""
+par GarbageNetwork.cloud.outToCan2.channel disabled false
+attr mutable ""
+par GarbageNetwork.cloud.outToCan2.channel delay 0.005s
+attr mutable ""
+attr unit s
+par GarbageNetwork.cloud.outToCan2.channel datarate 1e+08bps
+attr mutable ""
+attr unit bps
+par GarbageNetwork.cloud.outToCan2.channel ber 0
+attr mutable ""
+par GarbageNetwork.cloud.outToCan2.channel per 0
+attr mutable ""
+par GarbageNetwork.smartphone typename "\"Smartphone\""
+par GarbageNetwork.smartphone mode "\"fog\""
+par GarbageNetwork.smartphone checkInterval 0.5s
+attr unit s
+par GarbageNetwork.smartphone speed 90
+par GarbageNetwork.smartphone moveStep 0.05s
+attr unit s
+par GarbageNetwork.smartphone proximityRange 120
+par GarbageNetwork.smartphone startAboveCloudDy 90
+par GarbageNetwork.can1 typename "\"Can\""
+par GarbageNetwork.can1 canId 1
+par GarbageNetwork.can1 dropCount 3
+par GarbageNetwork.can1 cansHaveGarbage true
+par GarbageNetwork.can1 mode "\"fog\""
+par GarbageNetwork.can2 typename "\"Can\""
+par GarbageNetwork.can2 canId 2
+par GarbageNetwork.can2 dropCount 3
+par GarbageNetwork.can2 cansHaveGarbage true
+par GarbageNetwork.can2 mode "\"fog\""
+par GarbageNetwork.cloud typename "\"Cloud\""
+par GarbageNetwork typename "\"GarbageNetwork\""
+par GarbageNetwork cansHaveGarbage true
+par GarbageNetwork dropCount 3
+par GarbageNetwork checkInterval 0.5s
+attr unit s
+par GarbageNetwork slowDelay 0.1s
+attr unit s
+par GarbageNetwork slowDatarate 5e+06bps
+attr unit bps
+par GarbageNetwork fastDelay 0.005s
+attr unit s
+par GarbageNetwork fastDatarate 1e+08bps
+attr unit bps
+par GarbageNetwork clientDelay 0.01s
+attr unit s
+par GarbageNetwork clientDatarate 1e+08bps
+attr unit bps
+par GarbageNetwork can1X 100
+par GarbageNetwork can1Y 50
+par GarbageNetwork can2X 100
+par GarbageNetwork can2Y 350
+par GarbageNetwork cloudX 800
+par GarbageNetwork cloudY 200
+
