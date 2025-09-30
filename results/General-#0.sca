@@ -1,0 +1,25 @@
+version 3
+run General-0-20250926-02:53:52-1266
+attr configname General
+attr datetime 20250926-02:53:52
+attr datetimef 20250926-025352
+attr experiment General
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsd ""
+attr iterationvarsf ""
+attr measurement ""
+attr network FogNetwork
+attr processid 1266
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+config network FogNetwork
+config sim-time-limit 100s
+
+par FogNetwork.computer typename "\"Computer\""
+par FogNetwork.cloud typename "\"Cloud\""
+par FogNetwork typename "\"FogNetwork\""
+
