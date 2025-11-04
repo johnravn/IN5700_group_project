@@ -1,186 +1,3 @@
-/*
-#include <omnetpp.h>
-#include <cmath>
-#include <string>
-
-using namespace omnetpp;
-
-class Smartphone : public cSimpleModule
-{
-  private:
-    // --- Motion ---
-    struct Pt { double x, y; };
-    std::vector<Pt> waypoints;
-    int wpIdx = 0;
-    double x = 0, y = 0;
-    double speed = 60;                 // pixels per second
-    simtime_t moveStep = 0.05;         // GUI update period
-    double epsilon = 1.0;              // waypoint snap threshold (pixels)
-    cMessage *moveTimer = nullptr;
-
-    // --- Proximity pinging ---
-    simtime_t checkInterval;
-    simtime_t nextCheck1 = SIMTIME_ZERO;
-    simtime_t nextCheck2 = SIMTIME_ZERO;
-    double range = 120;
-
-    // --- Reply state ---
-    bool gotReply1 = false, gotReply2 = false;
-    bool yes1 = false, yes2 = false;
-    bool ok8 = false, ok10 = false;
-
-    // --- Mode ---
-    enum Mode { CLOUD, FOG, NONE } mode = CLOUD;
-
-    // --- Landmarks (from network params) ---
-    double can1X = 100, can1Y = 50;
-    double can2X = 100, can2Y = 350;
-    double cloudX = 800, cloudY = 200;
-    double startAboveCloudDy = 30;
-
-  private:
-    Mode parseMode(const char* s) {
-        std::string m = s ? std::string(s) : "cloud";
-        for (auto &ch : m) ch = (char)tolower(ch);
-        if (m == "cloud") return CLOUD;
-        if (m == "fog")   return FOG;
-        return NONE;
-    }
-    void setGuiPos(double nx, double ny) {
-        cDisplayString& ds = getDisplayString();
-        ds.setTagArg("p", 0, (long)std::round(nx));
-        ds.setTagArg("p", 1, (long)std::round(ny));
-    }
-    double dist(double ax, double ay, double bx, double by) const {
-        double dx = ax - bx, dy = ay - by;
-        return std::sqrt(dx*dx + dy*dy);
-    }
-    void sendCheck(int canIdx) {
-        if (canIdx == 1) {
-            auto *msg = new cMessage("1-Is the can full?");
-            msg->setKind(1);
-            send(msg, "outToCan1");
-            EV_INFO << "Phone -> Can1: 1-Is the can full?\n";
-        } else {
-            auto *msg = new cMessage("4-Is the can full?");
-            msg->setKind(4);
-            send(msg, "outToCan2");
-            EV_INFO << "Phone -> Can2: 4-Is the can full?\n";
-        }
-    }
-    void maybeSendCollectToCloud() {
-        if (mode != CLOUD) return;
-        if (!(yes1 && yes2)) return;
-        auto *m7 = new cMessage("7-Collect garbage"); m7->setKind(7); send(m7, "outToCloud");
-        auto *m9 = new cMessage("9-Collect garbage"); m9->setKind(9); send(m9, "outToCloud");
-        EV_INFO << "Phone -> Cloud: 7/9-Collect garbage\n";
-    }
-    void stepMotion() {
-        // Move toward current waypoint
-        if (wpIdx < (int)waypoints.size()) {
-            Pt t = waypoints[wpIdx];
-            double dx = t.x - x, dy = t.y - y;
-            double d = std::sqrt(dx*dx + dy*dy);
-            double step = speed * moveStep.dbl();
-            if (d <= std::max(epsilon, step)) {
-                x = t.x; y = t.y;
-                wpIdx++;
-            } else {
-                x += (dx/d) * step;
-                y += (dy/d) * step;
-            }
-            setGuiPos(x, y);
-        }
-
-        // Proximity-based checks
-        if (!gotReply1 && dist(x,y, can1X,can1Y) <= range && simTime() >= nextCheck1) {
-            sendCheck(1);
-            nextCheck1 = simTime() + checkInterval;
-        }
-        if (!gotReply2 && dist(x,y, can2X,can2Y) <= range && simTime() >= nextCheck2) {
-            sendCheck(2);
-            nextCheck2 = simTime() + checkInterval;
-        }
-
-        // Keep moving until final waypoint reached
-        if (wpIdx < (int)waypoints.size())
-            scheduleAt(simTime() + moveStep, moveTimer);
-        else
-            EV_INFO << "Phone reached final waypoint near cloud; stopping motion.\n";
-    }
-
-  protected:
-    virtual void initialize() override {
-        mode = parseMode(par("mode").stringValue());
-        checkInterval = par("checkInterval");
-        speed         = par("speed").doubleValue();
-        moveStep      = par("moveStep");
-        range         = par("proximityRange").doubleValue();
-        startAboveCloudDy = par("startAboveCloudDy").doubleValue();
-
-        // Query network coordinates
-        cModule *net = getParentModule();
-        can1X = net->par("can1X").doubleValue();
-        can1Y = net->par("can1Y").doubleValue();
-        can2X = net->par("can2X").doubleValue();
-        can2Y = net->par("can2Y").doubleValue();
-        cloudX = net->par("cloudX").doubleValue();
-        cloudY = net->par("cloudY").doubleValue();
-
-        // Build the path:
-        // start a bit above cloud -> left to can1 (same y as start) -> down to can2 -> right to cloud
-        Pt start   { cloudX, cloudY - startAboveCloudDy };
-        Pt toCan1H { can1X,  start.y };
-        Pt toCan2V { can1X,  cloudY + startAboveCloudDy };
-        Pt toCloud { cloudX, cloudY + startAboveCloudDy };
-        waypoints = { start, toCan1H, toCan2V, toCloud };
-
-        // Initialize position to the first waypoint and show it
-        x = waypoints.front().x; y = waypoints.front().y;
-        setGuiPos(x, y);
-
-        moveTimer = new cMessage("moveTimer");
-        scheduleAt(simTime(), moveTimer);
-    }
-
-    virtual void handleMessage(cMessage *msg) override {
-        if (msg == moveTimer) { stepMotion(); return; }
-
-        int k = msg->getKind();
-        const char* gateName = msg->getArrivalGate()->getName();
-
-        if (!strcmp(gateName, "inFromCan1")) {
-            if (k == 2 || k == 3) {
-                gotReply1 = true; if (k == 3) yes1 = true;
-                EV_INFO << "Phone <- Can1: " << msg->getName() << "\n";
-                maybeSendCollectToCloud();
-            }
-            delete msg; return;
-        }
-        if (!strcmp(gateName, "inFromCan2")) {
-            if (k == 5 || k == 6) {
-                gotReply2 = true; if (k == 6) yes2 = true;
-                EV_INFO << "Phone <- Can2: " << msg->getName() << "\n";
-                maybeSendCollectToCloud();
-            }
-            delete msg; return;
-        }
-        if (!strcmp(gateName, "inFromCloud")) {
-            if (k == 8)  { ok8  = true; EV_INFO << "Phone <- Cloud: 8-OK\n"; }
-            if (k == 10) { ok10 = true; EV_INFO << "Phone <- Cloud: 10-OK\n"; }
-            delete msg; return;
-        }
-        delete msg;
-    }
-
-    virtual void finish() override {
-        if (moveTimer) { cancelEvent(moveTimer); delete moveTimer; moveTimer = nullptr; }
-    }
-};
-
-Define_Module(Smartphone);
-*/
-
 #include <omnetpp.h>
 #include <cmath>
 #include <string>
@@ -352,9 +169,33 @@ class Smartphone : public cSimpleModule
             }
         }
     }
+    void updateStatusText(const char* text) {
+        // Access the network's canvas (parent module)
+        cModule *network = getParentModule();
+        cCanvas *canvas = network->getCanvas();
+        if (canvas) {
+            cFigure *figure = canvas->getFigure("statusText");
+
+            if (figure) {
+                cTextFigure *textFigure = check_and_cast<cTextFigure *>(figure);
+                textFigure->setText(text);
+            }
+
+            cFigure *titleFigure = canvas->getFigure("titleText");
+            if (titleFigure) {
+                cTextFigure  *titleTextFigure = check_and_cast<cTextFigure *>(titleFigure);
+
+                const char *title = network->par("title").stringValue();
+
+                titleTextFigure->setText(title);
+            }
+        }
+
+    }
 
   protected:
     virtual void initialize() override {
+        updateStatusText("Slow connection from the smartphone to others (time it takes) = 0\nSlow connection from others to the smartphone (time it takes) = 0\nFast connection from the smartphone to others (time it takes) = 0\nFast connection from others to the smartphone (time it takes) = 0\n\nConnection from can to others (time it takes) = 0\nConnection from others to can (time it takes) = 0\n\nConnection from anotherCan to others (time it takes) = 0\nConnection from others to anotherCan (time it takes) = 0\n\nSlow connection from the Cloud to others (time it takes) = 0\nSlow connection from others to the Cloud (time it takes) = 0\nFast connection from the Cloud to others (time it takes) = 0\nFast connection from others to the Cloud (time it takes) = 0");
         mode = parseMode(par("mode").stringValue());
         checkInterval     = par("checkInterval");
         speed             = par("speed").doubleValue();
@@ -372,10 +213,10 @@ class Smartphone : public cSimpleModule
         cloudY = net->par("cloudY").doubleValue();
 
         // Define strict straight-line path: left -> down -> right
-        Pt start   { cloudX,             cloudY - startAboveCloudDy };
-        Pt toCan1H { can1X,              cloudY - startAboveCloudDy };
-        Pt toCan2V { can1X,              cloudY + startAboveCloudDy };
-        Pt toCloud { cloudX,             cloudY + startAboveCloudDy };
+        Pt start { cloudX, cloudY - startAboveCloudDy };
+        Pt toCan1H { can1X, cloudY - startAboveCloudDy };
+        Pt toCan2V { can1X, cloudY + startAboveCloudDy };
+        Pt toCloud { cloudX, cloudY + startAboveCloudDy };
         waypoints = { start, toCan1H, toCan2V, toCloud };
 
         // Start at first waypoint (above cloud)
@@ -428,6 +269,89 @@ class Smartphone : public cSimpleModule
 
     virtual void finish() override {
         if (tick) { cancelEvent(tick); delete tick; tick = nullptr; }
+
+        mode = parseMode(par("mode").stringValue());
+
+        cModule *net = getParentModule();
+
+        double clientDelay = net->par("clientDelay").doubleValue() * 1000;
+        double fastDelay = net->par("fastDelay").doubleValue() * 1000;
+        double slowDelay = net->par("slowDelay").doubleValue() * 1000;
+
+        int slowSmartphoneToOthers;
+        int slowOthersToSmartphone;
+        int fastSmartphoneToOthers;
+        int fastOthersToSmartphone;
+
+        int cansToOthers;
+        int othersToCans;
+        
+        int slowCloudToOthers;
+        int slowOthersToCloud;
+        int fastCloudToOthers;
+        int fastOthersToCloud;
+
+        if (mode == CLOUD) {
+            slowSmartphoneToOthers = 2 * slowDelay;
+            slowOthersToSmartphone = 2 * slowDelay;
+            fastSmartphoneToOthers = 8 * clientDelay;
+            fastOthersToSmartphone = 2 * clientDelay;
+
+            cansToOthers = 1 * clientDelay;
+            othersToCans = 1 * clientDelay;
+
+            slowCloudToOthers = 2 * slowDelay;
+            slowOthersToCloud = 2 * slowDelay;
+            fastCloudToOthers = 0;
+            fastOthersToCloud = 0;
+        } else if (mode == FOG) {
+            slowSmartphoneToOthers = 0;
+            slowOthersToSmartphone = 0;
+            fastSmartphoneToOthers = 8 * clientDelay;
+            fastOthersToSmartphone = 2 * clientDelay;
+
+            cansToOthers = 1 * slowDelay;
+            othersToCans = 1 * slowDelay;
+
+            slowCloudToOthers = 0;
+            slowOthersToCloud = 0;
+            fastCloudToOthers = 2 * fastDelay;
+            fastOthersToCloud = 2 * fastDelay;
+        } else if (mode == NONE) {
+            slowSmartphoneToOthers = 0;
+            slowOthersToSmartphone = 0;
+            fastSmartphoneToOthers = 8 * clientDelay;
+            fastOthersToSmartphone = 2 * clientDelay;
+
+            cansToOthers = 1 * clientDelay;
+            othersToCans = 1 * clientDelay;
+
+            slowCloudToOthers = 0;
+            slowOthersToCloud = 0;
+            fastCloudToOthers = 0;
+            fastOthersToCloud = 0;
+        }
+
+        // Build statusText
+        std::ostringstream oss;
+
+        oss << "Slow connection from the smartphone to others (time it takes) = " << std::to_string(slowSmartphoneToOthers) << "\n";
+        oss << "Slow connection from others to the smartphone (time it takes) = " << std::to_string(slowOthersToSmartphone) << "\n";
+        oss << "Fast connection from the smartphone to others (time it takes) = " << std::to_string(fastSmartphoneToOthers) << "\n";
+        oss << "Fast connection from others to the smartphone (time it takes) = " << std::to_string(fastOthersToSmartphone) << "\n\n";
+
+        oss << "Connection from can to others (time it takes) = " << std::to_string(cansToOthers) << "\n";
+        oss << "Connection from others to can (time it takes) = " << std::to_string(othersToCans) << "\n\n";
+
+        oss << "Connection from anotherCan to others (time it takes) = " << std::to_string(cansToOthers) << "\n";
+        oss << "Connection from others to anotherCan (time it takes) = " << std::to_string(othersToCans) << "\n\n";
+
+        oss << "Slow connection from the cloud to others (time it takes) = " << std::to_string(slowCloudToOthers) << "\n";
+        oss << "Slow connection from others to the cloud (time it takes) = " << std::to_string(slowOthersToCloud) << "\n";
+        oss << "Fast connection from the cloud to others (time it takes) = " << std::to_string(fastCloudToOthers) << "\n";
+        oss << "Fast connection from others to the cloud (time it takes) = " << std::to_string(fastOthersToCloud);
+
+        updateStatusText(oss.str().c_str());
     }
 };
 

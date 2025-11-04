@@ -43,8 +43,8 @@ simple Smartphone
 simple Can
 {
     parameters:
-        int canId = default(1);         // 1 or 2
-        int dropCount = default(3);         // lose first N checks
+        int canId = default(1); // 1 or 2
+        int dropCount = default(3); // lose first N checks
         bool cansHaveGarbage = default(true);
         string mode = default("cloud");
     gates:
@@ -69,6 +69,11 @@ simple Cloud
 network GarbageNetwork
 {
     parameters:
+        @figure[titleText](type=text; pos=900,30; text=""; font=Arial,12,bold);
+        @figure[statusText](type=text; pos=900,80; text=""; font=Arial,12);
+
+        string title;
+
         // scenario knobs
         bool cansHaveGarbage = default(true);
         int dropCount = default(3);
@@ -91,6 +96,7 @@ network GarbageNetwork
         double cloudX = default(800);
         double cloudY = default(200);
 
+        @display("bgb=1316,412");
     submodules:
         smartphone: Smartphone {
             parameters:
@@ -110,10 +116,10 @@ network GarbageNetwork
                 canId = 2;
                 dropCount = parent.dropCount;
                 cansHaveGarbage = parent.cansHaveGarbage;
-                @display("p=100,350;i=block/circle");
+                @display("p=226,224;i=block/circle");
         }
         cloud: Cloud {
-            @display("p=800,200;i=misc/cloud");
+            @display("p=600,203;i=misc/cloud");
         }
 
     connections allowunconnected:
