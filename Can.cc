@@ -66,6 +66,7 @@ class Can : public cSimpleModule
             // Expect "1-Is the can full?" for can1 or "4-..." for can2
             if (k == expectedCheckKind()) {
                 if (dropsRemaining > 0) {
+                    bubble("Lost message!");
                     dropsRemaining--;
                     EV_WARN << "Can" << canId << " dropping '" << msg->getName()
                             << "'. Drops remaining: " << dropsRemaining << "\n";

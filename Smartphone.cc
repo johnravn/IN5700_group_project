@@ -13,7 +13,7 @@ class Smartphone : public cSimpleModule
     std::vector<Pt> waypoints;        // [ startAboveCloud, leftToCan1, downToCan2, rightToCloud ]
     int wpIdx = 0;                    // index of current target waypoint
     double x = 0, y = 0;
-    double speed = 60;                // pixels per second
+    double speed = 160;                // pixels per second
     simtime_t moveStep = 0.05;        // GUI update period
     double epsilon = 1.0;             // waypoint snap threshold (pixels)
     cMessage *tick = nullptr;         // timer for both motion + periodic checks
@@ -195,7 +195,27 @@ class Smartphone : public cSimpleModule
 
   protected:
     virtual void initialize() override {
-        updateStatusText("Slow connection from the smartphone to others (time it takes) = 0\nSlow connection from others to the smartphone (time it takes) = 0\nFast connection from the smartphone to others (time it takes) = 0\nFast connection from others to the smartphone (time it takes) = 0\n\nConnection from can to others (time it takes) = 0\nConnection from others to can (time it takes) = 0\n\nConnection from anotherCan to others (time it takes) = 0\nConnection from others to anotherCan (time it takes) = 0\n\nSlow connection from the Cloud to others (time it takes) = 0\nSlow connection from others to the Cloud (time it takes) = 0\nFast connection from the Cloud to others (time it takes) = 0\nFast connection from others to the Cloud (time it takes) = 0");
+        // Build statusText
+        std::ostringstream oss;
+
+        oss << "Slow connection from the smartphone to others (time it takes) = 0\n";
+        oss << "Slow connection from others to the smartphone (time it takes) = 0\n";
+        oss << "Fast connection from the smartphone to others (time it takes) = 0\n";
+        oss << "Fast connection from others to the smartphone (time it takes) = 0\n\n";
+
+        oss << "Connection from Can1 to others (time it takes) = 0\n";
+        oss << "Connection from others to Can1 (time it takes) = 0\n\n";
+
+        oss << "Connection from Can2 to others (time it takes) = 0\n";
+        oss << "Connection from others to Can2 (time it takes) = 0\n\n";
+
+        oss << "Slow connection from the cloud to others (time it takes) = 0\n";
+        oss << "Slow connection from others to the cloud (time it takes) = 0\n";
+        oss << "Fast connection from the cloud to others (time it takes) = 0\n";
+        oss << "Fast connection from others to the cloud (time it takes) = 0";
+
+        updateStatusText(oss.str().c_str());
+
         mode = parseMode(par("mode").stringValue());
         checkInterval     = par("checkInterval");
         speed             = par("speed").doubleValue();
@@ -215,8 +235,8 @@ class Smartphone : public cSimpleModule
         // Define strict straight-line path: left -> down -> right
         Pt start { cloudX, cloudY - startAboveCloudDy };
         Pt toCan1H { can1X, cloudY - startAboveCloudDy };
-        Pt toCan2V { can1X, cloudY + startAboveCloudDy };
-        Pt toCloud { cloudX, cloudY + startAboveCloudDy };
+        Pt toCan2V { can1X, cloudY + 100 + startAboveCloudDy };
+        Pt toCloud { cloudX, cloudY + 100 + startAboveCloudDy };
         waypoints = { start, toCan1H, toCan2V, toCloud };
 
         // Start at first waypoint (above cloud)
@@ -310,8 +330,8 @@ class Smartphone : public cSimpleModule
             fastSmartphoneToOthers = 8 * clientDelay;
             fastOthersToSmartphone = 2 * clientDelay;
 
-            cansToOthers = 1 * slowDelay;
-            othersToCans = 1 * slowDelay;
+            cansToOthers = 1 * fastDelay + 1 * clientDelay;
+            othersToCans = 1 * fastDelay + 1 * clientDelay;
 
             slowCloudToOthers = 0;
             slowOthersToCloud = 0;
@@ -340,11 +360,11 @@ class Smartphone : public cSimpleModule
         oss << "Fast connection from the smartphone to others (time it takes) = " << std::to_string(fastSmartphoneToOthers) << "\n";
         oss << "Fast connection from others to the smartphone (time it takes) = " << std::to_string(fastOthersToSmartphone) << "\n\n";
 
-        oss << "Connection from can to others (time it takes) = " << std::to_string(cansToOthers) << "\n";
-        oss << "Connection from others to can (time it takes) = " << std::to_string(othersToCans) << "\n\n";
+        oss << "Connection from Can1 to others (time it takes) = " << std::to_string(cansToOthers) << "\n";
+        oss << "Connection from others to Can1 (time it takes) = " << std::to_string(othersToCans) << "\n\n";
 
-        oss << "Connection from anotherCan to others (time it takes) = " << std::to_string(cansToOthers) << "\n";
-        oss << "Connection from others to anotherCan (time it takes) = " << std::to_string(othersToCans) << "\n\n";
+        oss << "Connection from Can2 to others (time it takes) = " << std::to_string(cansToOthers) << "\n";
+        oss << "Connection from others to Can2 (time it takes) = " << std::to_string(othersToCans) << "\n\n";
 
         oss << "Slow connection from the cloud to others (time it takes) = " << std::to_string(slowCloudToOthers) << "\n";
         oss << "Slow connection from others to the cloud (time it takes) = " << std::to_string(slowOthersToCloud) << "\n";

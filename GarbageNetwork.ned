@@ -69,8 +69,16 @@ simple Cloud
 network GarbageNetwork
 {
     parameters:
-        @figure[titleText](type=text; pos=900,30; text=""; font=Arial,12,bold);
-        @figure[statusText](type=text; pos=900,80; text=""; font=Arial,12);
+        @figure[titleText](type=text; pos=700,30; text=""; font=Arial,12,bold);
+        @figure[statusText](type=text; pos=700,80; text=""; font=Arial,12);
+
+        @figure[road1](type=line; points=600,100,50,100);
+        @figure[road2](type=line; points=50,100,50,400);
+        @figure[road3](type=line; points=50,400,600,400);
+
+		@figure[road4](type=line; points=600,200,200,200);
+        @figure[road5](type=line; points=200,200,200,300);
+        @figure[road6](type=line; points=200,300,600,300);
 
         string title;
 
@@ -89,20 +97,20 @@ network GarbageNetwork
         double clientDelay @unit(s) = default(10ms);
         double clientDatarate @unit(bps) = default(100Mbps);
 
-        double can1X = default(100);
+        double can1X = default(150);
         double can1Y = default(50);
         double can2X = default(100);
-        double can2Y = default(350);
-        double cloudX = default(800);
-        double cloudY = default(200);
+        double can2Y = default(450);
+        double cloudX = default(600);
+        double cloudY = default(250);
 
-        @display("bgb=1316,412");
+        @display("bgb=1110,500");
     submodules:
         smartphone: Smartphone {
             parameters:
                 checkInterval = parent.checkInterval;
                 // start where Smartphone.cc expects (x=xMin, y=y); we only set icon here
-                @display("p=163,203;i=device/palm");
+                @display("i=device/palm;p=600,205");
         }
         can1: Can {
             parameters:
@@ -116,10 +124,10 @@ network GarbageNetwork
                 canId = 2;
                 dropCount = parent.dropCount;
                 cansHaveGarbage = parent.cansHaveGarbage;
-                @display("p=226,224;i=block/circle");
+                @display("p=100,450;i=block/circle");
         }
         cloud: Cloud {
-            @display("p=600,203;i=misc/cloud");
+            @display("p=600,250;i=misc/cloud");
         }
 
     connections allowunconnected:
